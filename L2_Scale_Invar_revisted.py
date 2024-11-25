@@ -40,7 +40,7 @@ def L2_Scale_Invariant():
         except Exception as e:
             print(e)
     
-    def get_pixel(self, depth, pred, shape):
+    def get_pixel(self):
         images = self.images
 
         for h in images.Shape[0]:
@@ -50,6 +50,11 @@ def L2_Scale_Invariant():
                 difference = math.log10(depth_value) - math.log10(pred_value)
                 squared_diff = difference ** 2
         return squared_diff
+                
+    def calculate(self):
+        images = self.images
+        for h in images.Shape[0]:
+            for w in images.Shape[1]:
                 
 
         
