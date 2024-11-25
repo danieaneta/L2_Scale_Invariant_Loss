@@ -36,20 +36,11 @@ class L2_Scale_Invariant():
         log_mean = total_sum / self.n
         return log_mean
 
-    # def term_1(self, squared_mean):
-    #     total = (1/2(self.n))(squared_mean)
-    #     return total
-    
     def term_1(self, squared_mean):
         total =  (1 / (2 * self.n)) * squared_mean
         return total
 
-    # def term_2(self, log_mean):
-    #     total = ((1/2(self.n))**2)((log_mean)**2)
-    #     return total
-
     def term_2(self, log_mean):
-        # total = (1 / (2 * self.n) * log_mean) ** 2
         total = (1 / (((2 * self.n) * log_mean) ** 2)) 
         return total
 
