@@ -1,80 +1,91 @@
-import math 
+
+#Lscale-invariant​\=n1​i∑​(log(yi​)−log(y^​i​))2−2n21​(i∑​(log(yi​)−log(y^​i​)))2
+
+'''L2 Scale Pre-optimization
+logic for images. 
+'''
 
 
-#apply logarithm log()
-#calculate logarithmic difference
-#square each logarithmic difference
-#calculate the mean of the squared differences
-#
+"""
+read 2 images -> grayscale (depth, depth_pred)
+take perimeter, get total pixels
+(h,w) 
+
+"""
+
+from dataclasses import dataclass
+import cv2
+import numpy.typing as npt
+import math
+from datetime import datetime
+from tqdm import tqdm
+
+@dataclass
+class Image:
+    Depth: npt.NDArray
+    Pred: npt.NDArray
+    Shape: tuple
 
 class L2_Scale_Invariant():
-    def __init__(self, ground_truth, predictions):
-        self.ground_truth = ground_truth
-        self.predictions = predictions
+    def __init__(self, depth, depth_pred):
+        self.images = self.read_images(depth, depth_pred)
+        self.timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-        self.n = len(self.ground_truth)
+    def read_images(self, depth, pred) -> Image:
+        try:
+            depth, pred = cv2.imread(depth, cv2.IMREAD_GRAYSCALE), cv2.imread(pred, cv2.IMREAD_GRAYSCALE)
+            depth_shape, pred_shape = depth.shape, pred.shape
+            if depth_shape != pred_shape:
+                ValueError
+            else:
+                shape = depth_shape
+            return Image(Depth=depth, Pred=pred, Shape=shape)
+        except Exception as e:
+            print(e)
+    
+    def get_pixel(self):
+        images = self.images
+        squared_diff_list, diff = [], []
+        for h in tqdm(range(images.Shape[0])):
+            for w in range(images.Shape[1]):
+                i, s_constant = (h, w), 1e-9
+                depth_value, pred_value = images.Depth[i], images.Pred[i]
+                if depth_value == 0 or pred_value == 0:
+                    difference = math.log10(depth_value + s_constant) - math.log10(pred_value)
+                else:
+                    difference = math.log10(depth_value) - math.log10(pred_value)
+                with open(f'log-{self.timestamp}.txt', 'a') as file:
+                    file.write(f"Coordinates: {i}, Values: (V1={depth_value} V2={pred_value}), Diff={difference} \n")
+                    file.close()
+                squared_diff = difference ** 2
+                squared_diff_list.append(squared_diff)
+                diff.append(difference)
+        return squared_diff_list, diff
 
-    def logarithm(self, number):
-        logarithmic = math.log10(number)
-        return logarithmic
+    def mean_calc(self, squared_diff, diff, n):
+        total_sum_squared, total_sum = sum(squared_diff), sum(diff)
+        squared_mean = total_sum_squared / n
+        mean = total_sum / n
+        return squared_mean, mean
 
-    def log_diff(self, ground_truth_log, prediction_log):
-        difference = ground_truth_log - prediction_log
-        return difference
-
-    def log_squared_diff(self, difference):
-        squared_diff = difference ** 2
-        return squared_diff
-
-    def log_squared_mean(self, log_squared_differences):
-        total_sum = sum(log_squared_differences)
-        squared_mean = total_sum / self.n
-        return squared_mean
-
-    def log_mean(self, difference_list):
-        total_sum = sum(difference_list)
-        log_mean = total_sum / self.n
-        return log_mean
-
-    def term_1(self, squared_mean):
-        total =  (1 / (2 * self.n)) * squared_mean
-        return total
-
-    def term_2(self, log_mean):
-        total = (1 / (((2 * self.n) * log_mean) ** 2)) 
+    def term_calc(self, squared_mean, mean, n):
+        total_1 = (1 / n) * squared_mean
+        total_2 = ((1 / (2 * n) * mean) ** 2)
+        total = total_1 - total_2
         return total
 
     def calculate(self):
-        ground_log_numbers = []
-        prediction_log_numbers = []
-        for i in range(self.n):
-            ground_log = self.logarithm(self.ground_truth[i])
-            prediction_log = self.logarithm(self.predictions[i])
-            ground_log_numbers.append(ground_log)
-            prediction_log_numbers.append(prediction_log)
-
-        difference_list = []
-        for i in range(self.n):
-            diff = self.log_diff(ground_log_numbers[i], prediction_log_numbers[i])
-            difference_list.append(diff)
-
-        log_squared_differences = []
-        for i in range(self.n):
-            squared_diff = self.log_squared_diff(difference_list[i])
-            log_squared_differences.append(squared_diff)
-
-        squared_mean = self.log_squared_mean(log_squared_differences)
-        log_mean = self.log_mean(difference_list)
-
-        term_1 = self.term_1(squared_mean)
-        term_2 = self.term_2(log_mean)
-
-        L2_Scale_Loss = term_1 - term_2
-        print(L2_Scale_Loss)
-        return L2_Scale_Loss
-
+        images = self.images
+        n = len(images.Depth)
+        squared_diff, diff = self.get_pixel()
+        squared_mean, mean = self.mean_calc(squared_diff, diff, n)
+        total = self.term_calc(squared_mean, mean, n)
+        return total
         
 if __name__ == "__main__":
-    ground_truth = [50, 100, 150]
-    predictions = [45, 110, 140]
-    L2_Scale_Invariant(ground_truth, predictions).calculate()
+    IMG_PATH_GROUND = "mi_0.png"
+    IMG_PATH_PRED = "zo_0.png"
+    total = L2_Scale_Invariant(IMG_PATH_GROUND, IMG_PATH_PRED).calculate()
+    print(total)
+        
+
