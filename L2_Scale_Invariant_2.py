@@ -1,18 +1,6 @@
 
 #Lscale-invariant​\=n1​i∑​(log(yi​)−log(y^​i​))2−2n21​(i∑​(log(yi​)−log(y^​i​)))2
 
-'''L2 Scale Pre-optimization
-logic for images. 
-'''
-
-
-"""
-read 2 images -> grayscale (depth, depth_pred)
-take perimeter, get total pixels
-(h,w) 
-
-"""
-
 from dataclasses import dataclass
 import cv2
 import numpy.typing as npt
